@@ -1,18 +1,7 @@
 # NonRAID-HA
 
-[![GitHub Release][releases-shield]][releases]
-[![GitHub Activity][commits-shield]][commits]
-[![License][license-shield]](LICENSE)
-
-[![pre-commit][pre-commit-shield]][pre-commit]
-[![Black][black-shield]][black]
-
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
-
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
 
 Home Assistant integration for [nonraid-webui](https://github.com/domgregori/nonraid-webui), the
 NonRAID NAS dashboard's REST API. Authenticates with a `nonraid-tool` API bearer token (the same
@@ -37,14 +26,15 @@ never include the bearer token or host.
 
 ### HACS (recommended)
 
-This repository isn't in the default HACS store yet, so add it as a custom repository first:
+This repository isn't in the default HACS store yet, so add it as a custom repository.
 
-1. Make sure [HACS](https://hacs.xyz) is installed.
-2. In HACS, open the three-dot menu (top right) → **Custom repositories**, add
-   `https://github.com/domgregori/nonraid-ha` with type **Integration**.
-3. Search HACS for "NonRAID" and install it.
-4. Restart Home Assistant.
-5. In the HA UI go to "Settings" -> "Devices & Services" click "+ Add Integration" and search for
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=domgregori&repository=nonraid-ha&category=integration)
+
+1. Click the button above (or, in HACS, open the three-dot menu (top right) → **Custom
+   repositories** and add `https://github.com/domgregori/nonraid-ha` with type **Integration**).
+2. Search HACS for "NonRAID" and install it.
+3. Restart Home Assistant.
+4. In the HA UI go to "Settings" -> "Devices & Services" click "+ Add Integration" and search for
    "NonRAID".
 
 ### Manual
