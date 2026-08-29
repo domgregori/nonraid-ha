@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -13,7 +14,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfInformation, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -49,6 +50,43 @@ def _share_by_name(data: NonraidHaData, name: str) -> dict[str, Any] | None:
         if share.get("name") == name:
             return share
     return None
+
+
+def _share_stat(data: NonraidHaData, name: str, key: str) -> float | None:
+    stats = (_share_by_name(data, name) or {}).get("stats") or {}
+    return stats.get(key)
+
+
+def _disk_by_device(data: NonraidHaData, device: str) -> dict[str, Any] | None:
+    for disk in data.disks:
+        if disk.get("device") == device:
+            return disk
+    return None
+
+
+_USAGE_PCT_RE = re.compile(r"(\d+)%")
+
+
+def _disk_used_percent(data: NonraidHaData, device: str) -> int | None:
+    """Return a data disk's filesystem usage percent, or None for parity (has no filesystem).
+
+    Mirrors the webui frontend's own `parseUsagePct()` (src/selectors/disks.ts) - nmdctl reports
+    usage as a free-text string like "45%", not a structured number.
+    """
+    disk = _disk_by_device(data, device)
+    if not disk or disk.get("type") in ("P", "Q"):
+        return None
+    match = _USAGE_PCT_RE.search((disk.get("filesystem") or {}).get("usage") or "")
+    return int(match.group(1)) if match else 0
+
+
+def _disk_free_gb(data: NonraidHaData, device: str) -> float | None:
+    """Return a data disk's free space in GB, or None for parity."""
+    disk = _disk_by_device(data, device)
+    used_pct = _disk_used_percent(data, device)
+    if not disk or used_pct is None:
+        return None
+    return round(disk.get("size_gb", 0) * (1 - used_pct / 100), 1)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -122,6 +160,15 @@ HOST_SENSOR_DESCRIPTIONS: tuple[NonraidHaSensorEntityDescription, ...] = (
         },
     ),
     NonraidHaSensorEntityDescription(
+        key="uptime",
+        name="Uptime",
+        icon="mdi:clock-outline",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.system.get("uptimeSeconds"),
+    ),
+    NonraidHaSensorEntityDescription(
         key="cpu_percent",
         name="CPU Usage",
         icon="mdi:cpu-64-bit",
@@ -193,6 +240,16 @@ SHARE_SENSOR_DESCRIPTIONS: tuple[NonraidHaShareSensorEntityDescription, ...] = (
         # ShareWithStats.activeConnections's doc comment in nonraid-webui's backend/src/shares/types.ts).
         value_fn=lambda data, name: (_share_by_name(data, name) or {}).get("activeConnections"),
     ),
+    NonraidHaShareSensorEntityDescription(
+        key="used_percent",
+        name="Used",
+        icon="mdi:folder-percent",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data, name: _percent(
+            _share_stat(data, name, "usedBytes"), _share_stat(data, name, "totalBytes")
+        ),
+    ),
 )
 
 
@@ -227,6 +284,23 @@ DISK_SENSOR_DESCRIPTIONS: tuple[NonraidHaDiskSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         options=["active", "standby", "unknown"],
         value_fn=lambda data, device: data.smart_spin_states.get(device, "unknown"),
+    ),
+    NonraidHaDiskSensorEntityDescription(
+        key="used_percent",
+        name="Used",
+        icon="mdi:harddisk",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_disk_used_percent,
+    ),
+    NonraidHaDiskSensorEntityDescription(
+        key="free_space",
+        name="Free Space",
+        icon="mdi:harddisk",
+        device_class=SensorDeviceClass.DATA_SIZE,
+        native_unit_of_measurement=UnitOfInformation.GIGABYTES,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_disk_free_gb,
     ),
 )
 

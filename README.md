@@ -23,14 +23,30 @@ read-only token just skips the container start/stop switches, since it can't per
 
 | Platform        | Description                                                                 |
 | ---------------- | ---------------------------------------------------------------------------- |
-| `sensor`        | Array state/health, parity check progress, per-disk temperature/SMART health/spin state, host CPU/memory/temperature, cache pool health/usage. |
+| `sensor`        | Array state/health, parity check progress, uptime, host CPU/memory/temperature, cache pool health/usage, per-pool active SMB streams/usage, per-disk temperature/SMART health/spin state/used space (nicknamed per the webui's own disk-labels setting when one is set). |
 | `binary_sensor` | Array in an error/degraded state; any disk failed or missing.               |
-| `switch`        | Start/stop a Docker container or an LXC container (full-access token only). |
+| `switch`        | Start/stop a Docker container or an LXC container, spin a disk up/down (full-access token only). |
 
 Array start/stop, cache setup/replace, and system-level actions (reboot, hostname/timezone) are
 deliberately left out of this first pass as too high-blast-radius for a single entity toggle.
+Diagnostics (Settings → Devices & Services → NonRAID → Download diagnostics) are supported and
+never include the bearer token or host.
 
 ## Installation
+
+### HACS (recommended)
+
+This repository isn't in the default HACS store yet, so add it as a custom repository first:
+
+1. Make sure [HACS](https://hacs.xyz) is installed.
+2. In HACS, open the three-dot menu (top right) → **Custom repositories**, add
+   `https://github.com/domgregori/nonraid-ha` with type **Integration**.
+3. Search HACS for "NonRAID" and install it.
+4. Restart Home Assistant.
+5. In the HA UI go to "Settings" -> "Devices & Services" click "+ Add Integration" and search for
+   "NonRAID".
+
+### Manual
 
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 2. If you do not have a `custom_components` directory (folder) there, you need to create it.

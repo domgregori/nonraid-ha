@@ -134,6 +134,20 @@ class NonraidHaApiClient:
                 return None
             raise
 
+    # -- Disks --
+
+    async def async_spin_up_disk(self, slot: int) -> dict[str, Any]:
+        """Spin up the disk in this slot. Requires a full-access token."""
+        return await self.post(f"/disks/{slot}/spin-up")
+
+    async def async_spin_down_disk(self, slot: int) -> dict[str, Any]:
+        """Spin down the disk in this slot. Requires a full-access token.
+
+        A 409 from the backend (a parity check/clear is active) surfaces as a normal
+        NonraidHaApiError - the caller decides whether/how to report it.
+        """
+        return await self.post(f"/disks/{slot}/spin-down")
+
     # -- SMART --
 
     async def async_get_smart_temperatures(self) -> dict[str, float | None]:

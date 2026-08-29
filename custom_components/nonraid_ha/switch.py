@@ -5,9 +5,9 @@ token 403s on every mutating request (start/stop), so there is nothing for these
 control; the config flow's "read-only token" field decides this client-side (see the design
 handoff's "Open design question" - there is no backend endpoint to ask a token its own scope).
 
-Deliberately limited to Docker/LXC container start-stop for this first pass - array start/stop,
-cache setup/replace, and any system-level action are left out as too high-blast-radius for a
-single entity toggle (same reasoning already applied when scoping the CLI's TUI action keys).
+Covers Docker/LXC container start-stop and per-disk spin up/down - array start/stop, cache
+setup/replace, and any system-level action are deliberately left out as too high-blast-radius for
+a single entity toggle (same reasoning already applied when scoping the CLI's TUI action keys).
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import NonraidHaDataUpdateCoordinator
 from .const import DOMAIN
 from .entity import NonraidHaEntity
+from .sensor import _disk_label
 
 
 async def async_setup_entry(
@@ -32,6 +33,7 @@ async def async_setup_entry(
 
     known_docker_ids: set[str] = set()
     known_lxc_names: set[str] = set()
+    known_disk_devices: set[str] = set()
 
     @callback
     def _add_new_switches() -> None:
@@ -46,6 +48,11 @@ async def async_setup_entry(
             if name and name not in known_lxc_names:
                 known_lxc_names.add(name)
                 new_entities.append(NonraidHaLxcSwitch(coordinator, name))
+        for disk in coordinator.data.disks:
+            device = disk.get("device")
+            if device and device not in known_disk_devices:
+                known_disk_devices.add(device)
+                new_entities.append(NonraidHaDiskSpinSwitch(coordinator, device))
         if new_entities:
             async_add_entities(new_entities)
 
@@ -157,3 +164,57 @@ class NonraidHaLxcSwitch(NonraidHaEntity, SwitchEntity):
         """Stop the container."""
         await self.coordinator.client.async_stop_lxc_container(self._container_name)
         await self.coordinator.async_request_refresh()
+
+
+class NonraidHaDiskSpinSwitch(NonraidHaEntity, SwitchEntity):
+    """Spin up/down switch for one array disk. On = spinning, off = standby.
+
+    Applied to every real array disk (parity included), same as the webui's own Spin Up/Down
+    buttons and the CLI TUI's spin toggle - no HDD/SSD filtering, since the backend itself doesn't
+    reject the request for an SSD, it's just a no-op there.
+    """
+
+    _attr_icon = "mdi:harddisk"
+
+    def __init__(self, coordinator: NonraidHaDataUpdateCoordinator, device: str) -> None:
+        """Set up the switch for one array disk device (e.g. "/dev/sdb")."""
+        super().__init__(coordinator)
+        self._device = device
+        self._attr_unique_id = f"{self._entry_id}_disk_{device}_spin"
+
+    def _find_disk(self) -> dict[str, Any] | None:
+        for disk in self.coordinator.data.disks:
+            if disk.get("device") == self._device:
+                return disk
+        return None
+
+    @property
+    def name(self) -> str:
+        """Return this disk's current label plus "Spin", e.g. "Disk 1 Spin"."""
+        disk = self._find_disk()
+        label = _disk_label(disk, self.coordinator.data.disk_labels) if disk else self._device
+        return f"{label} Spin"
+
+    @property
+    def available(self) -> bool:
+        """Return whether this disk is still present in the array."""
+        return super().available and self._find_disk() is not None
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return whether the disk is currently spinning (not in standby)."""
+        return self.coordinator.data.smart_spin_states.get(self._device) == "active"
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Spin the disk up."""
+        disk = self._find_disk()
+        if disk is not None:
+            await self.coordinator.client.async_spin_up_disk(disk["slot"])
+            await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Spin the disk down."""
+        disk = self._find_disk()
+        if disk is not None:
+            await self.coordinator.client.async_spin_down_disk(disk["slot"])
+            await self.coordinator.async_request_refresh()

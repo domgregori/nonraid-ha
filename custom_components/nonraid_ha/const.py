@@ -7,7 +7,6 @@ from datetime import timedelta
 DOMAIN = "nonraid_ha"
 NAME = "NonRAID"
 MANUFACTURER = "NonRAID"
-VERSION = "0.1.0"
 
 ISSUE_URL = "https://github.com/domgregori/nonraid-ha/issues"
 

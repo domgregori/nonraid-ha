@@ -16,9 +16,9 @@ with either a full-access or a read-only `nonraid-tool` API token.
 
 | Platform        | Description                                                                 |
 | ---------------- | ---------------------------------------------------------------------------- |
-| `sensor`        | Array state/health, parity progress, per-disk temp/SMART/spin, host CPU/mem/temp, cache health/usage. |
+| `sensor`        | Array state/health, parity progress, uptime, host CPU/mem/temp, cache health/usage, per-pool streams/usage, per-disk temp/SMART/spin/used space. |
 | `binary_sensor` | Array in an error/degraded state; any disk failed or missing.               |
-| `switch`        | Start/stop a Docker or LXC container (full-access token only).              |
+| `switch`        | Start/stop a Docker or LXC container, spin a disk up/down (full-access token only). |
 
 {% if not installed %}
 
