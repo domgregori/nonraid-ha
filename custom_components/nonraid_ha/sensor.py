@@ -44,6 +44,13 @@ def _percent(used: float | None, total: float | None) -> float | None:
     return round(100 * used / total, 1)
 
 
+def _share_by_name(data: NonraidHaData, name: str) -> dict[str, Any] | None:
+    for share in data.shares:
+        if share.get("name") == name:
+            return share
+    return None
+
+
 @dataclass(frozen=True, kw_only=True)
 class NonraidHaSensorEntityDescription(SensorEntityDescription):
     """Describes a host-level NonRAID sensor."""
@@ -169,6 +176,27 @@ HOST_SENSOR_DESCRIPTIONS: tuple[NonraidHaSensorEntityDescription, ...] = (
 
 
 @dataclass(frozen=True, kw_only=True)
+class NonraidHaShareSensorEntityDescription(SensorEntityDescription):
+    """Describes a per-pool (share) NonRAID sensor."""
+
+    value_fn: Callable[[NonraidHaData, str], Any]
+
+
+SHARE_SENSOR_DESCRIPTIONS: tuple[NonraidHaShareSensorEntityDescription, ...] = (
+    NonraidHaShareSensorEntityDescription(
+        key="active_connections",
+        name="Active Streams",
+        icon="mdi:folder-network",
+        state_class=SensorStateClass.MEASUREMENT,
+        # Live SMB tree-connections right now, from the backend's own smbstatus-backed count -
+        # NFS has no reliable equivalent on the host, so this only ever reflects SMB clients (see
+        # ShareWithStats.activeConnections's doc comment in nonraid-webui's backend/src/shares/types.ts).
+        value_fn=lambda data, name: (_share_by_name(data, name) or {}).get("activeConnections"),
+    ),
+)
+
+
+@dataclass(frozen=True, kw_only=True)
 class NonraidHaDiskSensorEntityDescription(SensorEntityDescription):
     """Describes a per-disk NonRAID sensor."""
 
@@ -203,16 +231,18 @@ DISK_SENSOR_DESCRIPTIONS: tuple[NonraidHaDiskSensorEntityDescription, ...] = (
 )
 
 
-def _disk_label(disk: dict[str, Any]) -> str:
-    """Return a human-friendly label for a disk (its nmdctl name, or a Parity/slot fallback).
+def _disk_label(disk: dict[str, Any], disk_labels: dict[str, str]) -> str:
+    """Return this disk's user-chosen nickname, or a "Disk N"/Parity fallback.
 
-    Confirmed live against a real array: nmdctl reports the parity slot's own `disk_name` as the
-    literal string "none" (not JSON null), so that value has to be excluded explicitly here or a
-    parity disk's sensors end up named "none Temperature" instead of "Parity Temperature".
+    nmdctl's own `disk_name` isn't a reliable human label - it's unpopulated for data disks and
+    comes back as the literal string "none" for the parity slot - so it's never used here. The
+    real nickname source is nonraid-webui's disk-labels setting (`GET /settings`'s `diskLabels`,
+    keyed by the stable `disk_id`, see backend/src/settings/types.ts).
     """
-    name = disk.get("disk_name")
-    if name and name != "none":
-        return str(name)
+    disk_id = disk.get("disk_id")
+    nickname = disk_labels.get(disk_id) if disk_id else None
+    if nickname:
+        return nickname
     disk_type = disk.get("type")
     if disk_type == "P":
         return "Parity"
@@ -244,6 +274,23 @@ async def async_setup_entry(
         if new_entities:
             async_add_entities(new_entities)
 
+    known_share_names: set[str] = set()
+
+    @callback
+    def _add_new_share_sensors() -> None:
+        new_entities: list[SensorEntity] = []
+        for share in coordinator.data.shares:
+            name = share.get("name")
+            if not name or name in known_share_names:
+                continue
+            known_share_names.add(name)
+            new_entities.extend(
+                NonraidHaShareSensor(coordinator, name, description)
+                for description in SHARE_SENSOR_DESCRIPTIONS
+            )
+        if new_entities:
+            async_add_entities(new_entities)
+
     host_entities = [
         NonraidHaSensor(coordinator, description) for description in HOST_SENSOR_DESCRIPTIONS
     ]
@@ -251,6 +298,9 @@ async def async_setup_entry(
 
     _add_new_disk_sensors()
     entry.async_on_unload(coordinator.async_add_listener(_add_new_disk_sensors))
+
+    _add_new_share_sensors()
+    entry.async_on_unload(coordinator.async_add_listener(_add_new_share_sensors))
 
 
 class NonraidHaSensor(NonraidHaEntity, SensorEntity):
@@ -313,7 +363,7 @@ class NonraidHaDiskSensor(NonraidHaEntity, SensorEntity):
     def name(self) -> str:
         """Return this disk's current label plus the sensor kind, e.g. "Disk 1 Temperature"."""
         disk = self._find_disk()
-        label = _disk_label(disk) if disk else self._device
+        label = _disk_label(disk, self.coordinator.data.disk_labels) if disk else self._device
         return f"{label} {self.entity_description.name}"
 
     @property
@@ -325,3 +375,36 @@ class NonraidHaDiskSensor(NonraidHaEntity, SensorEntity):
     def native_value(self) -> Any:
         """Return the current value."""
         return self.entity_description.value_fn(self.coordinator.data, self._device)
+
+
+class NonraidHaShareSensor(NonraidHaEntity, SensorEntity):
+    """A per-pool (share) NonRAID sensor (currently just active SMB stream count)."""
+
+    entity_description: NonraidHaShareSensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: NonraidHaDataUpdateCoordinator,
+        share_name: str,
+        entity_description: NonraidHaShareSensorEntityDescription,
+    ) -> None:
+        """Set up the sensor for one pool (share)."""
+        super().__init__(coordinator)
+        self._share_name = share_name
+        self.entity_description = entity_description
+        self._attr_unique_id = f"{self._entry_id}_pool_{share_name}_{entity_description.key}"
+
+    @property
+    def name(self) -> str:
+        """Return this pool's name plus the sensor kind, e.g. "media Active Streams"."""
+        return f"{self._share_name} {self.entity_description.name}"
+
+    @property
+    def available(self) -> bool:
+        """Return whether this pool still exists."""
+        return super().available and _share_by_name(self.coordinator.data, self._share_name) is not None
+
+    @property
+    def native_value(self) -> Any:
+        """Return the current value."""
+        return self.entity_description.value_fn(self.coordinator.data, self._share_name)

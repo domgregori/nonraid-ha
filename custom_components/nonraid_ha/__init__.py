@@ -46,9 +46,11 @@ class NonraidHaData:
     cache: dict[str, Any]
     docker_containers: list[dict[str, Any]]
     lxc_containers: list[dict[str, Any]]
+    shares: list[dict[str, Any]] = field(default_factory=list)
     smart_temperatures: dict[str, float | None] = field(default_factory=dict)
     smart_health: dict[str, str | None] = field(default_factory=dict)
     smart_spin_states: dict[str, str] = field(default_factory=dict)
+    disk_labels: dict[str, str] = field(default_factory=dict)
 
     @property
     def disks(self) -> list[dict[str, Any]]:
@@ -95,12 +97,16 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
     async def _async_update_data(self) -> NonraidHaData:
         """Fetch a fresh snapshot of everything this integration's entities need."""
         try:
-            status, system, cache, docker_containers, lxc_containers = await asyncio.gather(
-                self.client.async_get_status(),
-                self.client.async_get_system(),
-                self.client.async_get_cache_status(),
-                self.client.async_get_docker_containers(),
-                self.client.async_get_lxc_containers(),
+            status, system, cache, docker_containers, lxc_containers, disk_labels, shares = (
+                await asyncio.gather(
+                    self.client.async_get_status(),
+                    self.client.async_get_system(),
+                    self.client.async_get_cache_status(),
+                    self.client.async_get_docker_containers(),
+                    self.client.async_get_lxc_containers(),
+                    self.client.async_get_disk_labels(),
+                    self.client.async_get_shares(),
+                )
             )
 
             smart_temperatures: dict[str, float | None] = {}
@@ -125,9 +131,11 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
             cache=cache,
             docker_containers=docker_containers,
             lxc_containers=lxc_containers,
+            shares=shares,
             smart_temperatures=smart_temperatures,
             smart_health=smart_health,
             smart_spin_states=smart_spin_states,
+            disk_labels=disk_labels,
         )
 
 

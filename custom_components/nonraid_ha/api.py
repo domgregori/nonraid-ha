@@ -192,6 +192,20 @@ class NonraidHaApiClient:
         """Stop an LXC container. Requires a full-access token."""
         return await self.post(f"/lxc/containers/{name}/stop")
 
+    # -- Shares (Pools) --
+
+    async def async_get_shares(self) -> list[dict[str, Any]]:
+        """Return every pool's config, live usage stats, and active SMB connection count."""
+        return await self.get("/shares") or []
+
+    # -- Settings --
+
+    async def async_get_disk_labels(self) -> dict[str, str]:
+        """Return the user's disk_id -> nickname map from /settings (empty if none are set)."""
+        settings = await self.get("/settings")
+        labels = settings.get("diskLabels") if isinstance(settings, dict) else None
+        return labels if isinstance(labels, dict) else {}
+
     # -- Validation (used by the config flow) --
 
     async def async_validate(self) -> dict[str, Any]:
