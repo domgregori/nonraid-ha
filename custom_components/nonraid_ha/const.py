@@ -22,12 +22,14 @@ DEFAULT_READ_ONLY = False
 # A local NAS on the LAN, not a cloud service - see hacs.json/manifest.json's iot_class.
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=60)
 
-# Platforms this integration provides. Sensor and binary_sensor are always registered; switch is
-# skipped at setup time for a read-only token (see __init__.py).
+# Platforms this integration provides. Only switch is skipped at setup time for a read-only token
+# (see __init__.py) - update entities are read-only reporting, same as sensor/binary_sensor, so
+# they're registered regardless of token scope.
 PLATFORM_SENSOR = "sensor"
 PLATFORM_BINARY_SENSOR = "binary_sensor"
 PLATFORM_SWITCH = "switch"
-PLATFORMS = [PLATFORM_SENSOR, PLATFORM_BINARY_SENSOR, PLATFORM_SWITCH]
+PLATFORM_UPDATE = "update"
+PLATFORMS = [PLATFORM_SENSOR, PLATFORM_BINARY_SENSOR, PLATFORM_SWITCH, PLATFORM_UPDATE]
 
 # nmdctl array health statuses (backend/src/nmd/types.ts's ArrayHealthStatus) that represent a
 # genuinely healthy/expected-idle state. Anything else is surfaced as "array has a problem".

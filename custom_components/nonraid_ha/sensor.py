@@ -14,7 +14,13 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfInformation, UnitOfTemperature, UnitOfTime
+from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfInformation,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -205,6 +211,17 @@ HOST_SENSOR_DESCRIPTIONS: tuple[NonraidHaSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         options=["not-configured", "healthy", "degraded", "unavailable"],
         value_fn=lambda data: data.cache.get("health"),
+    ),
+    NonraidHaSensorEntityDescription(
+        key="cli_version",
+        name="CLI Version",
+        icon="mdi:console-line",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        # No latest/upToDate of its own - the CLI ships from the same release as the webui and is
+        # always rebuilt+reinstalled alongside it (see nonraid-webui's backend/src/update/
+        # service.ts, ComponentUpdateStatus.cliTool's doc comment). See the `update` platform for
+        # the webui/driver's own installed-vs-latest reporting.
+        value_fn=lambda data: data.update_status.get("cliTool"),
     ),
     NonraidHaSensorEntityDescription(
         key="cache_used_percent",

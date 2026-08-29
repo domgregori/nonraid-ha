@@ -47,6 +47,7 @@ class NonraidHaData:
     docker_containers: list[dict[str, Any]]
     lxc_containers: list[dict[str, Any]]
     shares: list[dict[str, Any]] = field(default_factory=list)
+    update_status: dict[str, Any] = field(default_factory=dict)
     smart_temperatures: dict[str, float | None] = field(default_factory=dict)
     smart_health: dict[str, str | None] = field(default_factory=dict)
     smart_spin_states: dict[str, str] = field(default_factory=dict)
@@ -97,7 +98,7 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
     async def _async_update_data(self) -> NonraidHaData:
         """Fetch a fresh snapshot of everything this integration's entities need."""
         try:
-            status, system, cache, docker_containers, lxc_containers, disk_labels, shares = (
+            status, system, cache, docker_containers, lxc_containers, disk_labels, shares, update_status = (
                 await asyncio.gather(
                     self.client.async_get_status(),
                     self.client.async_get_system(),
@@ -106,6 +107,7 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
                     self.client.async_get_lxc_containers(),
                     self.client.async_get_disk_labels(),
                     self.client.async_get_shares(),
+                    self.client.async_get_update_status(),
                 )
             )
 
@@ -132,6 +134,7 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
             docker_containers=docker_containers,
             lxc_containers=lxc_containers,
             shares=shares,
+            update_status=update_status,
             smart_temperatures=smart_temperatures,
             smart_health=smart_health,
             smart_spin_states=smart_spin_states,

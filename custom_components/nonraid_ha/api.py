@@ -212,6 +212,17 @@ class NonraidHaApiClient:
         """Return every pool's config, live usage stats, and active SMB connection count."""
         return await self.get("/shares") or []
 
+    # -- Update --
+
+    async def async_get_update_status(self) -> dict[str, Any]:
+        """Return the last-known update check for both components plus the CLI's own version.
+
+        Cheap - never touches GitHub itself, just whatever the backend's own periodic/on-demand
+        check last found (or an all-null/unknown shape if one has never run) - safe to poll on
+        every coordinator refresh, unlike `POST /update/check`.
+        """
+        return await self.get("/update/status")
+
     # -- Settings --
 
     async def async_get_disk_labels(self) -> dict[str, str]:
