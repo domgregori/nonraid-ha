@@ -50,8 +50,13 @@ async def async_setup_entry(
                 new_entities.append(NonraidHaLxcSwitch(coordinator, name))
         for disk in coordinator.data.disks:
             device = disk.get("device")
-            if device and device not in known_disk_devices:
-                known_disk_devices.add(device)
+            if not device or device in known_disk_devices:
+                continue
+            known_disk_devices.add(device)
+            # Only an HDD actually spins - `disk_types.get(device)` is True for SSD, False for
+            # HDD, None if lsblk couldn't tell. Skip both SSD and unknown rather than risk
+            # offering a spin control that does nothing on a drive that never spins at all.
+            if coordinator.data.disk_types.get(device) is False:
                 new_entities.append(NonraidHaDiskSpinSwitch(coordinator, device))
         if new_entities:
             async_add_entities(new_entities)
@@ -169,9 +174,9 @@ class NonraidHaLxcSwitch(NonraidHaEntity, SwitchEntity):
 class NonraidHaDiskSpinSwitch(NonraidHaEntity, SwitchEntity):
     """Spin up/down switch for one array disk. On = spinning, off = standby.
 
-    Applied to every real array disk (parity included), same as the webui's own Spin Up/Down
-    buttons and the CLI TUI's spin toggle - no HDD/SSD filtering, since the backend itself doesn't
-    reject the request for an SSD, it's just a no-op there.
+    Only created for a disk confirmed to be an HDD (`disk_types` from `GET /smart/disk-types`,
+    the kernel's own lsblk ROTA flag) - an SSD never spins, and this is skipped for it, same as an
+    unknown/undetectable type. See `_add_new_switches()`'s filter in `async_setup_entry()`.
     """
 
     _attr_icon = "mdi:harddisk"

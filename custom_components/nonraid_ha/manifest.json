@@ -5,9 +5,11 @@
   "issue_tracker": "https://github.com/domgregori/nonraid-ha/issues",
   "dependencies": [],
   "config_flow": true,
-  "codeowners": ["@domgregori"],
+  "codeowners": [
+    "@domgregori"
+  ],
   "requirements": [],
   "integration_type": "hub",
   "iot_class": "local_polling",
-  "version": "0.4.0"
+  "version": "0.4.1"
 }

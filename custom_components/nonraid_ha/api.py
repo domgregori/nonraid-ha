@@ -166,6 +166,15 @@ class NonraidHaApiClient:
         """
         return await self.get("/smart/spin-states") or {}
 
+    async def async_get_disk_types(self) -> dict[str, bool | None]:
+        """Return `{device: True}` for an SSD, `False` for an HDD, `None` if undetermined.
+
+        A plain `lsblk` read (fast, never changes at runtime for a given device) - the actual
+        response is a raw boolean/null map, not the `'ssd' | 'hdd'` strings backend/API.md
+        describes (confirmed against backend/src/routes/smart.ts's real handler).
+        """
+        return await self.get("/smart/disk-types") or {}
+
     # -- System --
 
     async def async_get_system(self) -> dict[str, Any]:

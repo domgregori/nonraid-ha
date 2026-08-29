@@ -51,6 +51,7 @@ class NonraidHaData:
     smart_temperatures: dict[str, float | None] = field(default_factory=dict)
     smart_health: dict[str, str | None] = field(default_factory=dict)
     smart_spin_states: dict[str, str] = field(default_factory=dict)
+    disk_types: dict[str, bool | None] = field(default_factory=dict)
     disk_labels: dict[str, str] = field(default_factory=dict)
 
     @property
@@ -114,11 +115,13 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
             smart_temperatures: dict[str, float | None] = {}
             smart_health: dict[str, str | None] = {}
             smart_spin_states: dict[str, str] = {}
+            disk_types: dict[str, bool | None] = {}
             if status and status.get("disks"):
-                smart_temperatures, smart_health, smart_spin_states = await asyncio.gather(
+                smart_temperatures, smart_health, smart_spin_states, disk_types = await asyncio.gather(
                     self.client.async_get_smart_temperatures(),
                     self.client.async_get_smart_health(),
                     self.client.async_get_smart_spin_states(),
+                    self.client.async_get_disk_types(),
                 )
         except NonraidHaAuthError as err:
             # Invalid/revoked token - prompt the user to re-authenticate rather than retrying
@@ -138,6 +141,7 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
             smart_temperatures=smart_temperatures,
             smart_health=smart_health,
             smart_spin_states=smart_spin_states,
+            disk_types=disk_types,
             disk_labels=disk_labels,
         )
 
