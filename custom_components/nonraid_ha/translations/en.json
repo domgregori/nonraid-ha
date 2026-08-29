@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to NonRAID",
+        "description": "Enter your nonraid-webui host and an API token. Mint a token from the nonraid-webui UI (Settings → Security → API tokens) or with `nonraid-tool login`.",
+        "data": {
+          "host": "Host (e.g. https://nonraid.lan)",
+          "token": "API token",
+          "verify_ssl": "Verify SSL certificate",
+          "read_only": "This is a read-only token"
+        },
+        "data_description": {
+          "host": "Include the scheme (http:// or https://) and, if not the default port, the port number.",
+          "read_only": "Check this if the token was minted with `nonraid-tool login --read-only` or the read-only option in the UI. Container start/stop switches are only created for a full-access token."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate NonRAID",
+        "description": "The saved token for {host} no longer works. Mint a new one and enter it below.",
+        "data": {
+          "token": "API token",
+          "read_only": "This is a read-only token"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Enter a full URL, including http:// or https://.",
+      "invalid_auth": "The token was rejected. Check that it hasn't been revoked and was pasted in full.",
+      "cannot_connect": "Couldn't reach that host. Check the URL and that nonraid-webui is running.",
+      "unknown": "Unexpected error. Check the Home Assistant log for details."
+    },
+    "abort": {
+      "already_configured": "This NonRAID host is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  }
+}
