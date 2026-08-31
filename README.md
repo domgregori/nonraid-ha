@@ -10,12 +10,12 @@ read-only token just skips the container start/stop switches, since it can't per
 
 **This component sets up the following platforms.**
 
-| Platform        | Description                                                                 |
-| ---------------- | ---------------------------------------------------------------------------- |
+| Platform        | Description                                                                                                                                                                                                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sensor`        | Array state/health, parity check progress, uptime, installed CLI version, host CPU/memory/temperature, cache pool health/usage, per-pool active SMB streams/usage, per-disk temperature/SMART health/spin state/used space (nicknamed per the webui's own disk-labels setting when one is set). |
-| `binary_sensor` | Array in an error/degraded state; any disk failed or missing.               |
-| `switch`        | Start/stop a Docker container or an LXC container, spin an HDD up/down (SSDs don't get this control) (full-access token only). |
-| `update`        | Installed/latest release for the NonRAID driver and the WebUI itself. Read-only - use nonraid-webui's own Settings → Update page to actually apply one. |
+| `binary_sensor` | Array in an error/degraded state; any disk failed or missing.                                                                                                                                                                                                                                   |
+| `switch`        | Start/stop a Docker container or an LXC container, spin an HDD up/down (SSDs don't get this control) (full-access token only).                                                                                                                                                                  |
+| `update`        | Installed/latest release for the NonRAID driver and the WebUI itself. Read-only - use nonraid-webui's own Settings → Update page to actually apply one.                                                                                                                                         |
 
 Array start/stop, cache setup/replace, and system-level actions (reboot, hostname/timezone) are
 deliberately left out of this first pass as too high-blast-radius for a single entity toggle.

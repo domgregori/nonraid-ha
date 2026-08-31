@@ -5,13 +5,13 @@
         "title": "Connect to NonRAID",
         "description": "Enter your nonraid-webui host and an API token. Mint a token from the nonraid-webui UI (Settings → Security → API tokens) or with `nonraid-tool login`.",
         "data": {
-          "host": "Host (e.g. https://nonraid.lan)",
+          "host": "Host",
           "token": "API token",
           "verify_ssl": "Verify SSL certificate",
           "read_only": "This is a read-only token"
         },
         "data_description": {
-          "host": "Include the scheme (http:// or https://) and, if not the default port, the port number.",
+          "host": "Include the scheme (http or https) and, if not the default port, the port number - for example, your NAS's LAN hostname over https.",
           "read_only": "Check this if the token was minted with `nonraid-tool login --read-only` or the read-only option in the UI. Container start/stop switches are only created for a full-access token."
         }
       },

@@ -1,8 +1,7 @@
 """Constants for NonRAID-HA tests."""
+
 from custom_components.nonraid_ha.const import (
     CONF_PASSWORD,
-)
-from custom_components.nonraid_ha.const import (
     CONF_USERNAME,
 )
 

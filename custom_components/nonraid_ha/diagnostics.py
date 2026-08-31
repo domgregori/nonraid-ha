@@ -18,9 +18,7 @@ from .const import CONF_HOST, CONF_TOKEN, DOMAIN
 TO_REDACT = {CONF_TOKEN, CONF_HOST}
 
 
-async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
-) -> dict[str, Any]:
+async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     coordinator: NonraidHaDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = coordinator.data

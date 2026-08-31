@@ -65,17 +65,13 @@ class NonraidHaApiClient:
         """Return the configured host's base URL (no trailing slash, no /api)."""
         return self._base_url
 
-    async def _request(
-        self, method: str, path: str, json_body: dict[str, Any] | None = None
-    ) -> Any:
+    async def _request(self, method: str, path: str, json_body: dict[str, Any] | None = None) -> Any:
         """Make one authenticated request and return the parsed JSON body (or None)."""
         url = f"{self._base_url}/api{path}"
         headers = {"Authorization": f"Bearer {self._token}"}
         try:
             async with asyncio.timeout(REQUEST_TIMEOUT_SECONDS):
-                response = await self._session.request(
-                    method, url, json=json_body, headers=headers
-                )
+                response = await self._session.request(method, url, json=json_body, headers=headers)
                 text = await response.text()
         except TimeoutError as err:
             raise NonraidHaConnectionError(f"Timed out contacting {url}") from err

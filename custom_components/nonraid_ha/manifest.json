@@ -1,15 +1,13 @@
 {
   "domain": "nonraid_ha",
   "name": "NonRAID",
-  "documentation": "https://github.com/domgregori/nonraid-ha",
-  "issue_tracker": "https://github.com/domgregori/nonraid-ha/issues",
-  "dependencies": [],
+  "codeowners": ["@domgregori"],
   "config_flow": true,
-  "codeowners": [
-    "@domgregori"
-  ],
-  "requirements": [],
+  "dependencies": [],
+  "documentation": "https://github.com/domgregori/nonraid-ha",
   "integration_type": "hub",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/domgregori/nonraid-ha/issues",
+  "requirements": [],
   "version": "0.4.1"
 }

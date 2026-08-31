@@ -7,8 +7,8 @@ sensors, docker/LXC container switches. See https://github.com/domgregori/nonrai
 from __future__ import annotations
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
+import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -64,9 +64,7 @@ class NonraidHaData:
         if not self.status:
             return []
         return [
-            disk
-            for disk in self.status.get("disks", [])
-            if disk.get("device") and disk["device"] != "none"
+            disk for disk in self.status.get("disks", []) if disk.get("device") and disk["device"] != "none"
         ]
 
 
@@ -148,9 +146,7 @@ class NonraidHaDataUpdateCoordinator(DataUpdateCoordinator[NonraidHaData]):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up NonRAID from a config entry."""
-    session = async_get_clientsession(
-        hass, verify_ssl=entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
-    )
+    session = async_get_clientsession(hass, verify_ssl=entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL))
     client = NonraidHaApiClient(entry.data[CONF_HOST], entry.data[CONF_TOKEN], session)
 
     coordinator = NonraidHaDataUpdateCoordinator(hass, entry, client)
@@ -166,9 +162,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        entry, _platforms_for_entry(entry)
-    )
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, _platforms_for_entry(entry))
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok

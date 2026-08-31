@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import voluptuous as vol
 
 from .api import (
     NonraidHaApiClient,
@@ -33,9 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def _token_selector() -> selector.TextSelector:
     """Return a password-masked text selector for the API token field."""
-    return selector.TextSelector(
-        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
-    )
+    return selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD))
 
 
 async def _validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -63,9 +61,7 @@ class NonraidHaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize the flow."""
         self._reauth_entry: ConfigEntry | None = None
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:
         """Handle the initial step: host + token + verify_ssl + read-only."""
         errors: dict[str, str] = {}
 
@@ -114,16 +110,12 @@ class NonraidHaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
-    async def async_step_reauth(
-        self, entry_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> dict[str, Any]:
         """Handle re-authentication triggered by a 401 (token revoked/expired)."""
         self._reauth_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> dict[str, Any]:
         """Collect a new token and re-validate against the existing host."""
         errors: dict[str, str] = {}
         assert self._reauth_entry is not None

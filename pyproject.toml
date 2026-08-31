@@ -1,0 +1,5 @@
+[tool.black]
+# Matches setup.cfg's [flake8] max-line-length and [isort] line_length - all three tools need to
+# agree, or they fight each other. 110 covers this codebase's actual style (its own comments run
+# well past black's 88-char default) without the wholesale rewrap that default would force.
+line-length = 110

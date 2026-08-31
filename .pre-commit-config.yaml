@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.3.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-yaml
@@ -8,6 +8,16 @@ repos:
       - id: trailing-whitespace
   - repo: local
     hooks:
+      - id: isort
+        name: isort
+        entry: isort
+        language: system
+        types: [python]
+        require_serial: true
+        # Must run before black - reorder-python-imports (the tool this replaced) fought black
+        # over the blank line black wants after a module docstring, an unfixable oscillation
+        # confirmed live. isort's own black profile (see setup.cfg's [isort] section) is the
+        # standard pairing specifically designed to avoid that class of conflict.
       - id: black
         name: black
         entry: black
@@ -20,13 +30,7 @@ repos:
         language: system
         types: [python]
         require_serial: true
-      - id: reorder-python-imports
-        name: Reorder python imports
-        entry: reorder-python-imports
-        language: system
-        types: [python]
-        args: [--application-directories=custom_components]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.2.1
+    rev: v3.1.0
     hooks:
       - id: prettier

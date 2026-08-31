@@ -38,10 +38,7 @@ def _any_disk_failed_or_missing(data: NonraidHaData) -> bool | None:
     if data.status is None:
         return None
     counters = _array(data).get("counters", {}) or {}
-    return any(
-        (counters.get(key) or 0) > 0
-        for key in ("missing", "invalid", "wrong", "disabled")
-    )
+    return any((counters.get(key) or 0) > 0 for key in ("missing", "invalid", "wrong", "disabled"))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -73,8 +70,7 @@ async def async_setup_entry(
     """Set up NonRAID binary sensors for this config entry."""
     coordinator: NonraidHaDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
-        NonraidHaBinarySensor(coordinator, description)
-        for description in BINARY_SENSOR_DESCRIPTIONS
+        NonraidHaBinarySensor(coordinator, description) for description in BINARY_SENSOR_DESCRIPTIONS
     )
 
 

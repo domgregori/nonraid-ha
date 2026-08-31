@@ -58,9 +58,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up NonRAID update entities for this config entry."""
     coordinator: NonraidHaDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        NonraidHaUpdateEntity(coordinator, description) for description in UPDATE_DESCRIPTIONS
-    )
+    async_add_entities(NonraidHaUpdateEntity(coordinator, description) for description in UPDATE_DESCRIPTIONS)
 
 
 class NonraidHaUpdateEntity(NonraidHaEntity, UpdateEntity):

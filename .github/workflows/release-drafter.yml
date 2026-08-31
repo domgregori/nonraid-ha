@@ -4,12 +4,20 @@ on:
     branches:
       - main
       - master
+
+# Repo default is read-only GITHUB_TOKEN - creating/updating a draft release needs contents:write,
+# and categorizing PRs into it needs pull-requests:read. Without this every run fails with
+# "Resource not accessible by integration" (confirmed live).
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   draft_release:
     name: Release Drafter
     runs-on: ubuntu-latest
     steps:
       - name: Run release-drafter
-        uses: release-drafter/release-drafter@v5.13.0
+        uses: release-drafter/release-drafter@v7.7.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

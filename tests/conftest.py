@@ -1,4 +1,5 @@
 """Global fixtures for NonRAID-HA integration."""
+
 from unittest.mock import patch
 
 import pytest

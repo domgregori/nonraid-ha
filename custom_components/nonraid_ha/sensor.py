@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from dataclasses import dataclass
+import re
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -196,9 +196,7 @@ HOST_SENSOR_DESCRIPTIONS: tuple[NonraidHaSensorEntityDescription, ...] = (
         icon="mdi:memory",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: _percent(
-            data.system.get("memUsedBytes"), data.system.get("memTotalBytes")
-        ),
+        value_fn=lambda data: _percent(data.system.get("memUsedBytes"), data.system.get("memTotalBytes")),
         attributes_fn=lambda data: {
             "used_bytes": data.system.get("memUsedBytes"),
             "total_bytes": data.system.get("memTotalBytes"),
@@ -229,12 +227,8 @@ HOST_SENSOR_DESCRIPTIONS: tuple[NonraidHaSensorEntityDescription, ...] = (
         icon="mdi:memory",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        available_fn=lambda data: (
-            data.cache.get("health") not in (None, "not-configured")
-        ),
-        value_fn=lambda data: _percent(
-            data.cache.get("usedBytes"), data.cache.get("totalBytes")
-        ),
+        available_fn=lambda data: (data.cache.get("health") not in (None, "not-configured")),
+        value_fn=lambda data: _percent(data.cache.get("usedBytes"), data.cache.get("totalBytes")),
         attributes_fn=lambda data: {
             "used_bytes": data.cache.get("usedBytes"),
             "total_bytes": data.cache.get("totalBytes"),
@@ -259,9 +253,7 @@ SHARE_SENSOR_DESCRIPTIONS: tuple[NonraidHaShareSensorEntityDescription, ...] = (
         # Live SMB tree-connections right now, from the backend's own smbstatus-backed count -
         # NFS has no reliable equivalent on the host, so this only ever reflects SMB clients (see
         # ShareWithStats.activeConnections's doc comment in nonraid-webui's backend/src/shares/types.ts).
-        value_fn=lambda data, name: (_share_by_name(data, name) or {}).get(
-            "activeConnections"
-        ),
+        value_fn=lambda data, name: (_share_by_name(data, name) or {}).get("activeConnections"),
     ),
     NonraidHaShareSensorEntityDescription(
         key="used_percent",
@@ -388,10 +380,7 @@ async def async_setup_entry(
         if new_entities:
             async_add_entities(new_entities)
 
-    host_entities = [
-        NonraidHaSensor(coordinator, description)
-        for description in HOST_SENSOR_DESCRIPTIONS
-    ]
+    host_entities = [NonraidHaSensor(coordinator, description) for description in HOST_SENSOR_DESCRIPTIONS]
     async_add_entities(host_entities)
 
     _add_new_disk_sensors()
@@ -419,9 +408,7 @@ class NonraidHaSensor(NonraidHaEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return whether this sensor's underlying data is currently present."""
-        return super().available and self.entity_description.available_fn(
-            self.coordinator.data
-        )
+        return super().available and self.entity_description.available_fn(self.coordinator.data)
 
     @property
     def native_value(self) -> Any:
@@ -451,9 +438,7 @@ class NonraidHaDiskSensor(NonraidHaEntity, SensorEntity):
         super().__init__(coordinator)
         self._device = device
         self.entity_description = entity_description
-        self._attr_unique_id = (
-            f"{self._entry_id}_disk_{device}_{entity_description.key}"
-        )
+        self._attr_unique_id = f"{self._entry_id}_disk_{device}_{entity_description.key}"
 
     def _find_disk(self) -> dict[str, Any] | None:
         for disk in self.coordinator.data.disks:
@@ -465,11 +450,7 @@ class NonraidHaDiskSensor(NonraidHaEntity, SensorEntity):
     def name(self) -> str:
         """Return this disk's current label plus the sensor kind, e.g. "Disk 1 Temperature"."""
         disk = self._find_disk()
-        label = (
-            _disk_label(disk, self.coordinator.data.disk_labels)
-            if disk
-            else self._device
-        )
+        label = _disk_label(disk, self.coordinator.data.disk_labels) if disk else self._device
         return f"{label} {self.entity_description.name}"
 
     @property
@@ -498,9 +479,7 @@ class NonraidHaShareSensor(NonraidHaEntity, SensorEntity):
         super().__init__(coordinator)
         self._share_name = share_name
         self.entity_description = entity_description
-        self._attr_unique_id = (
-            f"{self._entry_id}_pool_{share_name}_{entity_description.key}"
-        )
+        self._attr_unique_id = f"{self._entry_id}_pool_{share_name}_{entity_description.key}"
 
     @property
     def name(self) -> str:
@@ -510,10 +489,7 @@ class NonraidHaShareSensor(NonraidHaEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return whether this pool still exists."""
-        return (
-            super().available
-            and _share_by_name(self.coordinator.data, self._share_name) is not None
-        )
+        return super().available and _share_by_name(self.coordinator.data, self._share_name) is not None
 
     @property
     def native_value(self) -> Any:

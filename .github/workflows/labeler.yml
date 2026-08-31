@@ -6,15 +6,20 @@ on:
       - main
       - master
 
+# Repo default is read-only GITHUB_TOKEN - the labeler needs write access to create/update labels,
+# or every run fails with "Resource not accessible by integration" (confirmed live).
+permissions:
+  issues: write
+
 jobs:
   labeler:
     name: Labeler
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v7.0.1
 
       - name: Run Labeler
-        uses: crazy-max/ghaction-github-labeler@v3.1.1
+        uses: crazy-max/ghaction-github-labeler@v6.0.0
         with:
           skip-delete: true
